@@ -1,0 +1,61 @@
+﻿@page "/Chat"
+
+<PageTitle>Chat</PageTitle>
+
+@using Gogita.Data
+@using OpenAI.Net;
+@inject IOpenAIService openAiService;
+<style>
+    <h2>
+    text-align: center;
+</h2>
+</style>
+<h1>Chat</h1>
+<h2>gogita yvelafers izams ogond bozebis jinaze</h2>
+
+<EditForm Model="@search" OnValidSubmit="SearchT">
+    <InputText @bind-Value="search.SearchText"></InputText>
+    <button type="submit">Search</button>
+</EditForm>
+
+<ul>
+    @foreach(var item in history){
+    <li>
+        <div>@item.User</div>
+        <div>@item.Message</div>
+
+    </li>
+    }
+</ul>
+
+@code {
+    private Search search = new Search();
+    private List<ChatInfo> history = new List<ChatInfo>();
+
+    private async Task SearchT()
+    {
+       
+        history.Add(new ChatInfo() { Message = search.SearchText, User = "Mgelo" });
+        history.Add(new ChatInfo() { Message = "", User = "Gogita" });
+        //await foreach(var response in openAiService.TextCompletion.GetStream(search.SearchText){
+
+        //}
+        await foreach ( var r in openAiService.TextCompletion.GetStream(search.SearchText, o=>{
+            o.MaxTokens = 500;
+            o.Model = "text-davinci-003";
+
+        }))
+        {
+
+            history[history.Count - 1].Message += r.Result.Choices[0].Text;
+            StateHasChanged();
+        }
+        search.SearchText = "";
+    }
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+    }
+}
